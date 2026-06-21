@@ -26,11 +26,64 @@ const LAYERS = [
   { id: "diversions", label: "Active Diversions", icon: Navigation },
 ];
 
-const BLOCKED_ROUTE: [number, number][] = [
-  [12.9758, 77.6094], [12.9720, 77.6050], [12.9680, 77.6020],
+// Active (open) corridors — solid lines
+const ACTIVE_ROUTES: { positions: [number, number][]; color: string; label: string }[] = [
+  {
+    label: "ORR North–City Core (NH-44)",
+    color: "#22c55e",
+    positions: [
+      [13.0435, 77.6020], [13.0300, 77.5990], [13.0100, 77.5960],
+      [12.9900, 77.5950], [12.9716, 77.5946],
+    ],
+  },
+  {
+    label: "Whitefield Corridor (Old Madras Road)",
+    color: "#3b82f6",
+    positions: [
+      [12.9716, 77.5946], [12.9730, 77.6200], [12.9745, 77.6450],
+      [12.9760, 77.6700],
+    ],
+  },
+  {
+    label: "Hosur Road South (NH-44S)",
+    color: "#f59e0b",
+    positions: [
+      [12.9174, 77.6237], [12.8970, 77.6310], [12.8780, 77.6380],
+    ],
+  },
 ];
-const DIVERSION_ROUTE: [number, number][] = [
-  [12.9758, 77.6094], [12.9800, 77.6120], [12.9840, 77.6060], [12.9680, 77.6020],
+
+// Blocked road segments — red dashed
+const BLOCKED_ROUTES: { positions: [number, number][]; label: string }[] = [
+  {
+    label: "MG Road — Event Closure",
+    positions: [
+      [12.9758, 77.6094], [12.9730, 77.6070], [12.9700, 77.6045], [12.9680, 77.6020],
+    ],
+  },
+  {
+    label: "Hebbal Flyover — Waterlogging",
+    positions: [
+      [13.0395, 77.5985], [13.0358, 77.5970], [13.0320, 77.5955],
+    ],
+  },
+];
+
+// Proposed diversion routes — purple dashed
+const DIVERSION_ROUTES: { positions: [number, number][]; label: string }[] = [
+  {
+    label: "MG Road Bypass via Residency Road",
+    positions: [
+      [12.9758, 77.6094], [12.9790, 77.6130], [12.9820, 77.6080],
+      [12.9800, 77.6040], [12.9770, 77.6010], [12.9680, 77.6020],
+    ],
+  },
+  {
+    label: "Hebbal Alt via Bellary Road SB",
+    positions: [
+      [13.0435, 77.6020], [13.0395, 77.5940], [13.0358, 77.5970],
+    ],
+  },
 ];
 
 export default function LiveTraffic() {
@@ -79,7 +132,7 @@ export default function LiveTraffic() {
 
           <div className="relative" style={{ height: "460px" }}>
             <MapContainer
-              center={[12.9716, 77.5946]} zoom={13}
+              center={[12.9500, 77.6100]} zoom={12}
               style={{ width: "100%", height: "100%" }}
               zoomControl={false}
             >
@@ -135,12 +188,28 @@ export default function LiveTraffic() {
                 </>
               )}
 
+              {/* Active open corridors — always visible */}
+              {ACTIVE_ROUTES.map((route) => (
+                <Polyline key={route.label} positions={route.positions}
+                  pathOptions={{ color: route.color, weight: 5, opacity: 0.85 }}>
+                  <Popup><div className="text-xs font-semibold">{route.label}</div></Popup>
+                </Polyline>
+              ))}
+
               {activeLayers.has("diversions") && (
                 <>
-                  <Polyline positions={BLOCKED_ROUTE}
-                    pathOptions={{ color: "#ef4444", weight: 4, dashArray: "8 5" }} />
-                  <Polyline positions={DIVERSION_ROUTE}
-                    pathOptions={{ color: "#8b5cf6", weight: 3, dashArray: "10 6" }} />
+                  {BLOCKED_ROUTES.map((route) => (
+                    <Polyline key={route.label} positions={route.positions}
+                      pathOptions={{ color: "#ef4444", weight: 5, dashArray: "9 6", opacity: 0.95 }}>
+                      <Popup><div className="text-xs font-semibold text-red-700">{route.label}</div></Popup>
+                    </Polyline>
+                  ))}
+                  {DIVERSION_ROUTES.map((route) => (
+                    <Polyline key={route.label} positions={route.positions}
+                      pathOptions={{ color: "#8b5cf6", weight: 4, dashArray: "11 7", opacity: 0.9 }}>
+                      <Popup><div className="text-xs font-semibold text-purple-700">{route.label}</div></Popup>
+                    </Polyline>
+                  ))}
                 </>
               )}
             </MapContainer>

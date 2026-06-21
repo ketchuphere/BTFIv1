@@ -3,13 +3,15 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: BTFI — Bengaluru Traffic Flow Intelligence API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: traffic
+    description: Traffic intelligence operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,137 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /predict-impact:
+    post:
+      operationId: predictImpact
+      tags: [traffic]
+      summary: Predict traffic impact
+      description: Predicts traffic impact score for a given event using Random Forest model
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImpactInput"
+      responses:
+        "200":
+          description: Impact prediction result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImpactResult"
+
+  /predict-congestion:
+    post:
+      operationId: predictCongestion
+      tags: [traffic]
+      summary: Predict congestion timeline
+      description: Predicts congestion timeline with delay and queue forecasts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CongestionInput"
+      responses:
+        "200":
+          description: Congestion forecast
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CongestionResult"
+
+  /optimize-resources:
+    post:
+      operationId: optimizeResources
+      tags: [traffic]
+      summary: Optimize resource deployment
+      description: Uses LP/ILP to optimize traffic resource deployment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceInput"
+      responses:
+        "200":
+          description: Optimized resource deployment plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceResult"
+
+  /create-diversion:
+    post:
+      operationId: createDiversion
+      tags: [traffic]
+      summary: Create diversion routes
+      description: Generates diversion routes for an affected road
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiversionInput"
+      responses:
+        "200":
+          description: Diversion plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiversionResult"
+
+  /analyze-event:
+    post:
+      operationId: analyzeEvent
+      tags: [traffic]
+      summary: Analyze event impact
+      description: Strategic analysis and tactical plan for a traffic event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventAnalysisInput"
+      responses:
+        "200":
+          description: Event analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventAnalysisResult"
+
+  /events/recent:
+    get:
+      operationId: getRecentEvents
+      tags: [traffic]
+      summary: Get recent traffic events
+      description: Returns a list of recent traffic events with their status
+      responses:
+        "200":
+          description: List of recent events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrafficEvent"
+
+  /events/stats:
+    get:
+      operationId: getEventStats
+      tags: [traffic]
+      summary: Get event statistics
+      description: Returns aggregate statistics about traffic events
+      responses:
+        "200":
+          description: Event statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventStats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +167,320 @@ components:
       required:
         - status
 
+    ImpactInput:
+      type: object
+      required:
+        - crowdSize
+        - duration
+        - roadClosed
+        - sector
+      properties:
+        crowdSize:
+          type: integer
+          description: Estimated crowd size
+        duration:
+          type: integer
+          description: Duration in minutes
+        roadClosed:
+          type: boolean
+          description: Whether road closure is required
+        sector:
+          type: string
+          description: Road sector or junction name
+        eventType:
+          type: string
+          description: Type of event
+
+    ImpactResult:
+      type: object
+      required:
+        - success
+        - model
+        - sector
+        - impactScore
+        - riskLevel
+        - confidence
+        - avgDelayMinutes
+        - queueLengthVehicles
+        - factors
+      properties:
+        success:
+          type: boolean
+        model:
+          type: string
+        sector:
+          type: string
+        impactScore:
+          type: integer
+        riskLevel:
+          type: string
+        confidence:
+          type: integer
+        avgDelayMinutes:
+          type: integer
+        queueLengthVehicles:
+          type: integer
+        factors:
+          type: array
+          items:
+            type: string
+
+    CongestionInput:
+      type: object
+      required:
+        - crowdSize
+        - duration
+        - roadClosed
+      properties:
+        crowdSize:
+          type: integer
+        duration:
+          type: integer
+        roadClosed:
+          type: boolean
+
+    CongestionTimePoint:
+      type: object
+      required:
+        - time
+        - delay
+        - queue
+        - level
+      properties:
+        time:
+          type: string
+        delay:
+          type: integer
+        queue:
+          type: integer
+        level:
+          type: string
+
+    CongestionResult:
+      type: object
+      required:
+        - success
+        - sector
+        - timeline
+      properties:
+        success:
+          type: boolean
+        sector:
+          type: string
+        timeline:
+          type: array
+          items:
+            $ref: "#/components/schemas/CongestionTimePoint"
+
+    ResourceInput:
+      type: object
+      required:
+        - crowdSize
+        - roadClosed
+        - severity
+      properties:
+        crowdSize:
+          type: integer
+        roadClosed:
+          type: boolean
+        severity:
+          type: string
+
+    ResourceAllocation:
+      type: object
+      required:
+        - location
+        - share
+        - personnel
+      properties:
+        location:
+          type: string
+        share:
+          type: string
+        personnel:
+          type: integer
+
+    ResourceRequirements:
+      type: object
+      required:
+        - police
+        - marshals
+        - barricades
+      properties:
+        police:
+          type: integer
+        marshals:
+          type: integer
+        barricades:
+          type: integer
+
+    ResourceResult:
+      type: object
+      required:
+        - success
+        - optimizationMethod
+        - badge
+        - requirements
+        - allocations
+      properties:
+        success:
+          type: boolean
+        optimizationMethod:
+          type: string
+        badge:
+          type: string
+        requirements:
+          $ref: "#/components/schemas/ResourceRequirements"
+        allocations:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceAllocation"
+
+    DiversionInput:
+      type: object
+      required:
+        - affectedRoad
+      properties:
+        affectedRoad:
+          type: string
+
+    DiversionResult:
+      type: object
+      required:
+        - success
+        - affectedRoad
+        - diversionType
+        - normalEta
+        - congestedEta
+        - divertedEta
+        - primaryRoute
+        - secondaryRoute
+        - savingMinutes
+        - signageBoardsCount
+        - status
+      properties:
+        success:
+          type: boolean
+        affectedRoad:
+          type: string
+        diversionType:
+          type: string
+        normalEta:
+          type: string
+        congestedEta:
+          type: string
+        divertedEta:
+          type: string
+        primaryRoute:
+          type: string
+        secondaryRoute:
+          type: string
+        savingMinutes:
+          type: integer
+        signageBoardsCount:
+          type: integer
+        status:
+          type: string
+
+    EventAnalysisInput:
+      type: object
+      required:
+        - eventType
+        - location
+        - crowdSize
+        - roadClosed
+      properties:
+        eventType:
+          type: string
+        location:
+          type: string
+        crowdSize:
+          type: integer
+        roadClosed:
+          type: boolean
+
+    EventAnalysisResult:
+      type: object
+      required:
+        - success
+        - source
+        - analysis
+      properties:
+        success:
+          type: boolean
+        source:
+          type: string
+        analysis:
+          $ref: "#/components/schemas/EventAnalysis"
+
+    EventAnalysis:
+      type: object
+      required:
+        - strategicOverview
+        - criticalAnomalies
+        - tacticalPlan
+        - signalOptimizations
+      properties:
+        strategicOverview:
+          type: string
+        criticalAnomalies:
+          type: array
+          items:
+            type: string
+        tacticalPlan:
+          type: array
+          items:
+            type: string
+        signalOptimizations:
+          type: string
+
+    TrafficEvent:
+      type: object
+      required:
+        - id
+        - eventType
+        - location
+        - status
+        - priority
+        - startTime
+        - impactScore
+      properties:
+        id:
+          type: string
+        eventType:
+          type: string
+        location:
+          type: string
+        status:
+          type: string
+        priority:
+          type: string
+        startTime:
+          type: string
+        impactScore:
+          type: integer
+        description:
+          type: ["string", "null"]
+
+    EventStats:
+      type: object
+      required:
+        - totalActive
+        - criticalCount
+        - avgImpactScore
+        - resolvedToday
+        - corridorsCovered
+        - responseTimeMinutes
+      properties:
+        totalActive:
+          type: integer
+        criticalCount:
+          type: integer
+        avgImpactScore:
+          type: integer
+        resolvedToday:
+          type: integer
+        corridorsCovered:
+          type: integer
+        responseTimeMinutes:
+          type: integer

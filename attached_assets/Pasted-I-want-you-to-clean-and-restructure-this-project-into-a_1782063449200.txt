@@ -1,0 +1,152 @@
+I want you to clean and restructure this project into a production-ready codebase.
+
+Project:
+Bengaluru Traffic Flow Intelligence (BTFI)
+
+IMPORTANT RULES:
+
+Do NOT redesign the frontend UI/UX.
+Do NOT change existing pages, components, styling, animations, or user flow.
+
+Do NOT rewrite the ML pipeline.
+Do NOT change:
+- Random Forest impact prediction
+- XGBoost congestion forecasting
+- LP/ILP optimization
+- routing logic
+- FastAPI business logic
+
+Your task is ONLY:
+- clean architecture
+- fix folder structure
+- improve deployment readiness
+- remove unnecessary files
+- fix broken imports and paths
+
+
+Create this production-ready structure:
+
+BTFI/
+
+├── frontend/
+│   ├── app/
+│   ├── components/
+│   ├── pages/
+│   ├── services/
+│   │   └── api.ts
+│   ├── hooks/
+│   ├── types/
+│   ├── public/
+│   ├── package.json
+│   ├── next.config.js
+│   └── tsconfig.json
+
+
+├── backend/
+│   ├── main.py
+│   ├── api/
+│   │   ├── routes.py
+│   ├── services/
+│   ├── models/
+│   ├── schemas/
+│   ├── config/
+│   └── requirements.txt
+
+
+├── ml_pipeline/
+│   ├── data/
+│   ├── preprocessing/
+│   ├── feature_engineering/
+│   ├── models/
+│   └── inference/
+
+
+├── docs/
+
+├── .env.example
+├── README.md
+├── start.sh
+└── .gitignore
+
+
+Deployment requirements:
+
+Make the project ready for:
+
+- Replit deployment
+- Vercel deployment
+- GitHub repository
+
+
+Fix:
+
+- incorrect imports
+- broken relative paths
+- duplicate files
+- unused dependencies
+- missing environment configuration
+
+
+Create environment variables:
+
+NEXT_PUBLIC_API_URL=
+
+MAPPLS_STATIC_KEY=
+
+MAPPLS_CLIENT_ID=
+
+MAPPLS_CLIENT_SECRET=
+
+
+Ensure:
+
+Frontend communicates with backend using API service layer.
+
+Backend APIs remain:
+
+/health
+
+/api/predict-impact
+
+/api/predict-congestion
+
+/api/optimize-resources
+
+/api/generate-diversion
+
+/api/generate-report
+
+
+Remove:
+
+node_modules
+.next
+cache files
+temporary AI generated files
+
+
+After restructuring:
+
+Run and verify:
+
+Frontend:
+npm install
+npm run build
+
+
+Backend:
+pip install -r requirements.txt
+uvicorn main:app
+
+
+Finally provide:
+
+1. New folder structure
+2. Files moved
+3. Files deleted
+4. Deployment instructions
+
+
+Again:
+ONLY restructure and productionize.
+Preserve the existing BTFI design and intelligence pipeline.

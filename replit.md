@@ -1,45 +1,76 @@
-# [Project name]
+# BTFI — Bengaluru Traffic Flow Intelligence
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Smart City Traffic Operations Command Unit for the Bengaluru Traffic Police — real-time incident monitoring, ML-powered impact prediction, congestion forecasting, resource optimization, and diversion routing.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
+- `pnpm --filter @workspace/btfi run dev` — run the React frontend (port 25331)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- `pnpm --filter @workspace/db run push` — push DB schema changes to PostgreSQL (dev only)
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
+- Frontend: React 19 + Vite 7 + Tailwind CSS v4 + shadcn/ui
+- API: Express 5 + Pino logging
+- DB: PostgreSQL + Drizzle ORM (optional; app runs without it)
 - Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- API codegen: Orval (from OpenAPI spec → React Query hooks + Zod schemas)
+- Build: esbuild (CJS bundle for API), Vite (static for frontend)
+- Map: React Leaflet + OpenStreetMap/CARTO tiles (optional Mappls traffic overlay)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+| Path | Purpose |
+|---|---|
+| `lib/api-spec/openapi.yaml` | **Source of truth** for all API contracts |
+| `lib/api-client-react/src/generated/` | Generated React Query hooks (do not edit) |
+| `lib/api-zod/src/generated/` | Generated Zod schemas (do not edit) |
+| `artifacts/api-server/src/routes/traffic.ts` | All traffic intelligence endpoints |
+| `artifacts/btfi/src/pages/` | All frontend page components |
+| `artifacts/btfi/src/lib/map-tiles.ts` | Map tile config + Mappls key logic |
+| `docs/architecture.md` | Full architecture reference |
+| `docs/deployment.md` | Local + Replit deployment instructions |
+| `.env.example` | All environment variables with descriptions |
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+1. **Contract-first API** — `openapi.yaml` drives both client hooks and server validation; running codegen keeps frontend types and server schemas always in sync.
+2. **Single-language stack** — All ML-equivalent logic (Random Forest scoring, LP/ILP optimization, diversion routing) is TypeScript in the Express server; no Python runtime needed.
+3. **Mappls feature-flagged** — Live traffic tile overlay activates only when `VITE_MAPPLS_STATIC_KEY` is set; the app runs fully without it using CARTO/OpenStreetMap.
+4. **In-memory event store** — `SAMPLE_EVENTS` in `traffic.ts` provides realistic mock data; replace with Drizzle DB queries when persistence is needed.
+5. **Replit proxy routing** — The shared reverse proxy routes `/api` → Express and `/` → Vite; no custom proxy config is needed in either service.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- **Dashboard** — Live GIS map of Bengaluru incidents, KPI cards (active incidents, corridor delay, coordinated vehicles), real-time dispatch feed, Command Center alerts
+- **Live Traffic** — Leaflet map with incident markers, saturation heatmap, BTP deployment overlays
+- **Event Intelligence** — Cognitive Hub with split incident list + detail pane, ops milestones timeline, AI prediction attribution bars
+- **Congestion Forecast** — Delay/queue timeline charts driven by the ML prediction endpoint
+- **Resource Planner** — LP/ILP-optimized police/marshal/barricade allocation
+- **Diversion Center** — Route diversion scheme selector + What-If simulator + downloadable operational plan
+- **Reports** — Centralized analytics center with downloadable Markdown report
+- **Settings** — System configuration
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Do NOT redesign the frontend UI/UX — layout, colors, components, and animations are finalized.
+- Do NOT rewrite the API business logic — prediction models, optimization, and routing are finalized.
+- Production-prep changes only: architecture, structure, env vars, deployment readiness.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- **Never edit generated files** in `lib/api-client-react/src/generated/` or `lib/api-zod/src/generated/`. Edit `openapi.yaml` and run codegen.
+- **PORT and BASE_PATH** are injected by the Replit artifact system automatically. Only set them manually for local dev outside Replit.
+- `lib/db` schema is currently an empty placeholder. The API server does not require a database connection to run.
+- The API server build must complete before routes are available. After copying new route files, always restart the `api-server` workflow.
 
 ## Pointers
 
+- `docs/architecture.md` — full service map, data flow, and design decisions
+- `docs/deployment.md` — local dev setup + Replit publish instructions
+- `.env.example` — all environment variables with descriptions
 - See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details

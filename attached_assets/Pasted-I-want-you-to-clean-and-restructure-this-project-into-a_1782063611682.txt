@@ -1,0 +1,265 @@
+I want you to clean and restructure this project into a production-ready codebase.
+
+
+
+Project:
+
+Bengaluru Traffic Flow Intelligence (BTFI)
+
+
+
+IMPORTANT RULES:
+
+
+
+Do NOT redesign the frontend UI/UX.
+
+Do NOT change existing pages, components, styling, animations, or user flow.
+
+
+
+Do NOT rewrite the ML pipeline.
+
+Do NOT change:
+
+- Random Forest impact prediction
+
+- XGBoost congestion forecasting
+
+- LP/ILP optimization
+
+- routing logic
+
+- FastAPI business logic
+
+
+
+Your task is ONLY:
+
+- clean architecture
+
+- fix folder structure
+
+- improve deployment readiness
+
+- remove unnecessary files
+
+- fix broken imports and paths
+
+
+
+Your task is to clean and organize the project for production.
+
+IMPORTANT RULES:
+
+DO NOT redesign the frontend.
+
+The frontend UI/UX is already finalized.
+
+DO NOT change:
+
+- colors
+
+- layouts
+
+- dashboard design
+
+- components
+
+- animations
+
+- user flow
+
+- visual style
+
+DO NOT rewrite backend logic.
+
+The backend ML pipeline is already finalized.
+
+DO NOT change:
+
+- Random Forest impact model
+
+- XGBoost congestion model
+
+- LP/ILP optimization
+
+- routing logic
+
+- FastAPI business logic
+
+Your job is only:
+
+- clean architecture
+
+- fix structure
+
+- remove unnecessary files
+
+- prepare deployment
+
+PROJECT COMPONENTS:
+
+Frontend:
+
+- Next.js / React
+
+- Google AI Studio generated UI
+
+Backend:
+
+- FastAPI
+
+- ML services
+
+ML Pipeline:
+
+follow event_impact_pipeline.py
+
+--------------------------------------------
+
+Create a clean production directory:
+
+BTFI/
+
+frontend/
+
+    app/
+
+    components/
+
+    services/
+
+    hooks/
+
+    types/
+
+    public/
+
+    package.json
+
+    next.config.ts
+
+    tsconfig.json
+
+backend/
+
+    main.py
+
+    api/
+
+    services/
+
+    models/
+
+    requirements.txt
+
+ml_pipeline/
+
+    event_impact_pipeline.py
+
+data/
+
+docs/
+
+--------------------------------------------
+
+Remove:
+
+- duplicate folders
+
+- unused files
+
+- temporary AI generated files
+
+- build folders
+
+- node_modules
+
+- .next
+
+- cache files
+
+Keep:
+
+- all frontend UI files
+
+- all backend APIs
+
+- all ML pipeline files
+
+- all documentation
+
+--------------------------------------------
+
+Create:
+
+.env.example
+
+Include:
+
+MAPPLS_STATIC_KEY=
+
+Never expose secrets.
+
+--------------------------------------------
+
+API connection rules:
+
+Frontend must consume backend APIs:
+
+/api/predict-impact
+
+/api/predict-congestion
+
+/api/optimize-resources
+
+/api/generate-diversion
+
+/api/generate-report
+
+Do not hardcode values.
+
+Dashboard values must come from backend.
+
+--------------------------------------------
+
+Quality checks:
+
+Verify:
+
+npm install
+
+npm run build
+
+Backend:
+
+pip install -r requirements.txt
+
+uvicorn main:app
+
+Fix only errors that block deployment.
+
+--------------------------------------------
+
+Final output:
+
+Provide:
+
+1. Clean folder structure
+
+2. Files moved
+
+3. Files deleted
+
+4. Deployment instructions
+
+5. Environment variables needed
+
+Again:
+
+DO NOT CHANGE UI/UX.
+
+DO NOT CHANGE ML PIPELINE.
+
+ONLY CLEAN AND PRODUCTIONIZE.

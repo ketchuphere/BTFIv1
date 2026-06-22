@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, CircleMarker 
 import { CARTO_TILE_URL, CARTO_ATTRIBUTION } from "@/lib/map-tiles";
 import { MapplsTrafficLayer } from "@/components/mappls-traffic-layer";
 import { useGetRecentEvents } from "@workspace/api-client-react";
+import { useRealtimeEvents } from "@/hooks/use-realtime-events";
 import L from "leaflet";
 import {
   Thermometer, AlertCircle, Users, Video, Navigation,
@@ -211,9 +212,8 @@ export default function LiveTraffic() {
   const [activeLayers, setActiveLayers] = useState(new Set(["heat", "incidents", "diversions"]));
   const [selectedKey, setSelectedKey] = useState<string>("south");
 
-  const { data: recentEvents = [] } = useGetRecentEvents({
-    query: { refetchInterval: 30_000 },
-  });
+  const { data: seedEvents = [] } = useGetRecentEvents({});
+  const { events: recentEvents, connected: wsConnected } = useRealtimeEvents(seedEvents);
 
   // Build per-corridor congestion state from live backend events
   const corridorCongestion = useMemo(() => {
@@ -262,9 +262,9 @@ export default function LiveTraffic() {
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse inline-block" />
             LIVE · {liveCount} Active Incidents
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-3 py-1.5 font-semibold">
+          <div className={`flex items-center gap-1.5 text-xs rounded-full px-3 py-1.5 font-semibold ${wsConnected ? "text-blue-700 bg-blue-50 border border-blue-200" : "text-gray-500 bg-gray-50 border border-gray-200"}`}>
             <Wifi className="w-3 h-3" />
-            Backend Connected
+            {wsConnected ? "Live · WS Connected" : "Connecting…"}
           </div>
           <div className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5 font-mono">
             {new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })} IST

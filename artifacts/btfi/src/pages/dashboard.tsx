@@ -4,6 +4,7 @@ import { CARTO_TILE_URL, CARTO_ATTRIBUTION } from "@/lib/map-tiles";
 import { MapplsTrafficLayer } from "@/components/mappls-traffic-layer";
 import L from "leaflet";
 import { useGetEventStats, useGetRecentEvents, useOptimizeResources, useCreateDiversion } from "@workspace/api-client-react";
+import { useRealtimeEvents } from "@/hooks/use-realtime-events";
 import {
   AlertTriangle, Activity, Clock, Car, Search, ChevronRight,
   AlertCircle, Zap, Navigation, Users, Shield, MapPin, Radio,
@@ -277,8 +278,13 @@ export default function Dashboard() {
   const [dispatchFilter, setDispatchFilter] = useState("ALL");
   const [selectedIncident, setSelectedIncident] = useState(INCIDENTS[0]);
 
-  const { data: stats } = useGetEventStats({ query: { refetchInterval: 30000 } });
-  const { data: events } = useGetRecentEvents({ query: { refetchInterval: 30000 } });
+  const { data: stats } = useGetEventStats({
+    query: { refetchInterval: 30_000, queryKey: ["event-stats"] },
+  });
+  const { data: seedData = [] } = useGetRecentEvents({
+    query: { queryKey: ["recent-events-seed"] },
+  });
+  const { events: realtimeEvents } = useRealtimeEvents(seedData);
 
   const activeCount = stats?.activeEvents ?? 5;
   const criticalCount = stats?.criticalAlerts ?? 4;

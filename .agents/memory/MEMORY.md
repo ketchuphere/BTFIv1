@@ -1,0 +1,1 @@
+- [WebSocket real-time push pattern](ws-realtime-pattern.md) — WS server must attach to http.createServer(app), not app.listen(); Replit proxy passes WS upgrades on /api/ws correctly.

@@ -35,6 +35,10 @@ export function MapplsTrafficLayer() {
     let errorCount = 0;
     layer.on("tileerror", () => {
       errorCount++;
+      if (errorCount === 1) {
+        // eslint-disable-next-line no-console
+        console.info("[BTFI] Mappls traffic tile failed — if this persists, add your domain to the allowed-referrers list in the Mappls dashboard.");
+      }
       if (errorCount >= 4 && layerRef.current) {
         map.removeLayer(layerRef.current);
         layerRef.current = null;

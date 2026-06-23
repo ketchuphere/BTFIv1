@@ -148,6 +148,14 @@ Event Information (type, location, crowd size, duration, road closure)
                               └──────────────────────┘
 ```
 
+## Repository Assets & Implementation Details
+
+The **attached_assets** section of this GitHub repository contains the complete implementation of the BTFI platform locally, including the frontend application, backend services, ML integration layer, with readme file ad well and API endpoint implementations. All production code required to understand, run, and extend the project is provided within these assets.
+
+The frontend contains the complete dashboard interface and user interaction components, while the backend contains the FastAPI services, ML pipeline integration, and REST API endpoints responsible for generating traffic intelligence outputs.
+
+To run the complete application, follow the setup and execution instructions provided below. The frontend and backend can be started separately, and the complete workflow connects user inputs → backend APIs → ML pipeline → prediction outputs → dashboard visualization.
+
 **Layer responsibilities:**
 
 - **Frontend** — Pure presentation layer. All data from API via React Query hooks. No business logic.
@@ -159,86 +167,133 @@ Event Information (type, location, crowd size, duration, road closure)
 
 ---
 
-## ML Pipeline Architecture
-
-### Input Features
-
+# ML Pipeline Architecture
+ 
+> Corrected version. The previous doc described a hardcoded-arithmetic placeholder
+> (`crowdSize`, sinusoidal curves, fixed tier formulas) that does not match the
+> actual implementation in `BTFI_ml_pipeline.py`. This version reflects the real
+> trained models and their real test-set metrics.
+ 
+## Input Features
+ 
 | Feature | Type | Description |
 |---|---|---|
-| `crowdSize` | integer | Estimated event attendance |
-| `duration` | integer | Event duration in minutes |
-| `roadClosed` | boolean | Whether a full road closure is required |
-| `sector` | string | Primary road/junction identifier |
-| `eventType` | string | Classification (rally, accident, public event, etc.) |
-| `severity` | string | Operational severity tier (Normal / Moderate / Heavy / Critical) |
-
-### Model 1 — Event Impact Prediction (Random Forest–equivalent)
-
-**Purpose:** Produce a normalized impact score (0–100) and risk level classification for any incoming event.
-
-**Algorithm:**
-
-```
-baseImpact     = roadClosed ? 50 : 20
-crowdFactor    = min(crowdSize / 3000, 3.5)
-durationMult   = min(1 + duration / 240, 2.0)
-closureMult    = roadClosed ? 1.4 : 1.0
-
-rawImpact      = (baseImpact + crowdSize / 250) × durationMult × closureMult
-impactScore    = min(round(rawImpact), 100)
-```
-
-**Outputs:**
-
-| Output | Description |
-|---|---|
-| `impactScore` | 0–100 normalized congestion severity |
-| `riskLevel` | Normal / Moderate / Heavy / Critical |
-| `confidence` | Model confidence percentage (85–95%) |
-| `avgDelayMinutes` | Estimated average delay per vehicle |
-| `queueLengthVehicles` | Estimated queue build-up |
-| `factors` | Contributing factor labels for explainability |
-
-### Model 2 — Congestion Timeline Forecast
-
-**Purpose:** Project congestion development over a 90-minute window at 15-minute intervals.
-
-**Algorithm:** Sinusoidal rise-and-decay curve parameterized by crowd size and closure status:
-
-```
-For each timepoint t ∈ [15, 30, 45, 60, 75, 90] minutes:
-  progress = t / 60
-  curve    = progress < 1 ? sin(π × progress / 2) : 1 − (progress − 1) × 0.15
-  delay    = max(3, round((baseDelay + crowdSize / 400) × curve × closureMult))
-  queue    = max(100, round(crowdSize × 0.7 × curve × closureMult))
-```
-
-**Outputs:** Time-series of `{time, delay, queue, level}` for dashboard charting.
-
-### Model 3 — LP/ILP Resource Optimizer
-
-**Purpose:** Determine the minimum sufficient resource deployment across three operational zones given severity tier.
-
-**Tier thresholds:**
-
-| Tier | Condition | Police formula |
-|---|---|---|
-| Critical | score > 75 or roadClosed or crowd > 8000 | `50 + crowdSize / 250` |
-| Heavy | score > 50 or crowd > 4000 | `30 + crowdSize / 350` |
-| Normal | otherwise | `10 + crowdSize / 500` |
-
-**Allocation split:** Critical Junctions (45%), Event Perimeter (35%), Diversion Signage (20%).
-
-### Model 4 — Evaluation Metrics
-
-| Model | Purpose | Metric | Value |
-|---|---|---|---|
-| Impact Predictor | Risk classification | Confidence range | 85–95% |
-| Congestion Forecaster | Delay estimation | MAE (delay minutes) | 1.4 min |
-| Resource Optimizer | Manpower allocation | Coverage accuracy | 96% |
-| Prediction vs Actual | System-wide | Accuracy index (15/30/60 min) | 92.8 / 93.5 / 95.8% |
-
+| `latitude`, `longitude` | float | Event start coordinates |
+| `endlatitude`, `endlongitude` | float | Event end coordinates (defaults to start if absent); used to derive `impact_radius` via haversine distance |
+| `address`, `junction` | string | High-cardinality location identifiers, smoothed target-encoded |
+| `zone`, `corridor` | string | Administrative/road-corridor grouping, used for rolling historical stats |
+| `event_type`, `event_cause` | string | Event classification (accident, rally, public event, maintenance, etc.) |
+| `requires_road_closure` | boolean | Whether a full road closure is required |
+| `priority` | string | Low / High |
+| `start_datetime`, `closed_datetime` | datetime | Source for `start_hour/day/month/weekday`, `is_weekend`, `is_rush_hour`, `event_duration_hours` |
+ 
+There is no `crowdSize`, `duration`, `sector`, or `severity` input field anywhere in
+the data or pipeline — those belong to the old placeholder version.
+ 
 ---
+ 
+## Model 1 — Event Impact Prediction (Random Forest Regressor)
+ 
+**Purpose:** Predict a normalized 0–100 `impact_score_scaled`.
+ 
+**How it actually works:** not a closed-form formula. A `RandomForestRegressor(random_state=42)`
+trained on time, location, and historical-frequency features, with `address`/`junction`
+smoothed (m-estimate) target-encoded and numerics imputed/scaled via a `ColumnTransformer`
+pipeline. The target itself is a weighted blend (hotspot score 0.40, duration 0.25, closure
+0.20, priority 0.15) built from historical data — not recomputed live, which is a known
+limitation of the current `predict_impact()` function.
+ 
+**Test-set result:**
+ 
+| Metric | Value |
+|---|---|
+| MAE | 0.6448 |
+| RMSE | 1.3893 |
+| R² | 0.9939 |
+ 
+**Outputs:** `impact_score_scaled` only. `riskLevel`, `confidence`, `avgDelayMinutes`,
+`queueLengthVehicles`, and `factors` are **not** outputs of this model — delay/queue/risk-level
+come from Model 2, and there's no confidence score or explainability-factor output anywhere
+in the pipeline.
+ 
+---
+ 
+## Model 2 — Congestion Forecasting (3× XGBoost)
+ 
+**Purpose:** Predict `expected_delay_minutes`, `queue_length_realistic`, and `congestion_level`
+(Low / Medium / High / Critical).
+ 
+**How it actually works:** not a sinusoidal curve. Two `XGBRegressor`s (delay; queue length
+with a log1p transform) plus one `XGBClassifier` (congestion level), trained on the impact
+score plus traffic/time/location features. No 15-minute timeline is generated — this is a
+single-point forecast per event, not a 90-minute time series.
+ 
+**Test-set result:**
+ 
+| Model | Metric | Value |
+|---|---|---|
+| Delay Regressor | R² | 0.9965 |
+| Queue Regressor (log1p) | R² | 0.9687 |
+| Congestion Classifier | Accuracy | 0.9992 |
+| Congestion Classifier | F1 (macro) | 0.9988 |
+ 
+`congestion_level` is derived via a rule-based function fed by delay, realistic queue, impact
+score, and closure status — the classifier is trained against this rule-based label, not a raw
+regressor output, which keeps downstream resource/queue numbers operationally sane.
+ 
+---
+ 
+## Model 3 — Resource Optimizer (PuLP ILP)
+ 
+**Purpose:** Minimum-cost police / marshal / barricade deployment.
+ 
+**How it actually works:** not threshold tiers with fixed formulas. A genuine Integer Linear
+Program (`LpProblem`, solved via `PULP_CBC_CMD`) minimizing:
+ 
+```
+police × 1000 + marshals × 600 + barricade_m × 50
+```
+ 
+subject to:
+ 
+- Per-tier base minimums (`BASE_REQUIREMENTS`)
+- Linear scaling on `impact_score_scaled`, `expected_delay_minutes`, `queue_length`
+  (`SCALING_COEFFICIENTS`)
+- Road-category multipliers (Major Road ≈ 1.2–1.5× Local Road)
+- A 50m barricade floor when closure is required
+There's no fixed 45% / 35% / 20% allocation split — deployment *location* (Critical Junctions
+& Perimeter / Major Road Intersections / Main Event Area) is a separate simplified rule, not
+a percentage of the optimized totals.
+ 
+---
+ 
+## Model 4 — Diversion Planning (NetworkX)
+ 
+*Missing entirely from the old doc.*
+ 
+**Purpose:** Recommend alternate routes.
+ 
+Dijkstra shortest-path routing over an 18-junction synthetic Bengaluru road graph; edge
+weights update dynamically from Module 2's predicted congestion (distance, capacity, closure
+penalty). Minor events without closure → no diversion recommended; closures or high
+congestion → local or major diversion with an explicit alternate route and path cost.
+ 
+---
+ 
+## Evaluation Summary
+ 
+*Replaces the old Model 4 metrics table.*
+ 
+| Model | Metric | Test-Set Value |
+|---|---|---|
+| Impact Predictor (Random Forest) | R² / MAE / RMSE | 0.9939 / 0.6448 / 1.3893 |
+| Delay Regressor (XGBoost) | R² | 0.9965 |
+| Queue Regressor (XGBoost, log1p) | R² | 0.9687 |
+| Congestion Classifier (XGBoost) | Accuracy / F1 (macro) | 0.9992 / 0.9988 |
+| Resource Optimizer | Method | ILP — no accuracy metric; it's a constraint-satisfying minimizer |
+| Diversion Planner | Method | Dijkstra shortest-path — no accuracy metric; deterministic graph routing |
+ 
+
 
 ## Project Structure
 
@@ -267,7 +322,16 @@ artifacts-monorepo/
 │           └── lib/
 │               ├── map-tiles.ts     # CARTO/Mappls tile config
 │               └── utils.ts
-│
+|
+│── attached_assets/
+|           ├── frontend/
+|           ├── backend/
+|           ├── data/
+|           ├── docs/
+|           ├── ml_pipeline/
+|           ├── README.md
+|
+|
 ├── lib/
 │   ├── api-spec/
 │   │   └── openapi.yaml             # Source of truth for all API contracts

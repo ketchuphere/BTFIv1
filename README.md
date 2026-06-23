@@ -327,7 +327,6 @@ artifacts-monorepo/
 |           ├── frontend/
 |           ├── backend/
 |           ├── data/
-|           ├── docs/
 |           ├── ml_pipeline/
 |           ├── README.md
 |

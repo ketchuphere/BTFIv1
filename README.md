@@ -107,7 +107,7 @@ Event Information (type, location, crowd size, duration, road closure)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        Browser Client                        │
+│                        Browser Client                       │
 │  React 19 + Vite + Tailwind + React Leaflet + React Query   │
 └─────────────────────────┬───────────────────────────────────┘
                           │  HTTP (path-proxied)
@@ -116,35 +116,35 @@ Event Information (type, location, crowd size, duration, road closure)
          ▼                                 ▼
    GET /  (frontend)              GET|POST /api/* (backend)
          │                                 │
-┌────────┴────────┐          ┌─────────────┴─────────────────┐
-│  Vite Dev Server │          │        Express 5 API Server    │
-│  artifacts/btfi  │          │    artifacts/api-server        │
-└──────────────────┘          │                                │
-                              │  ┌──────────────────────────┐ │
-                              │  │  ML Scoring Engine        │ │
-                              │  │  • RF impact prediction   │ │
-                              │  │  • Congestion forecaster  │ │
-                              │  └──────────────────────────┘ │
-                              │  ┌──────────────────────────┐ │
-                              │  │  LP/ILP Optimizer         │ │
-                              │  │  • Resource allocation    │ │
-                              │  └──────────────────────────┘ │
-                              │  ┌──────────────────────────┐ │
-                              │  │  Routing Engine           │ │
-                              │  │  • Diversion planning     │ │
-                              │  └──────────────────────────┘ │
-                              │  ┌──────────────────────────┐ │
-                              │  │  Event Store (in-memory)  │ │
-                              │  │  → replaceable with DB    │ │
-                              │  └──────────────────────────┘ │
-                              └────────────────────────────────┘
+┌────────┴────────┐           ┌────────────┴─────────────────┐
+│  Vite Dev Server│           │        Express 5 API Server  │
+│  artifacts/btfi │           │    artifacts/api-server      │
+└─────────────────┘           │                              │
+                              │  ┌─────────────────────────┐ │
+                              │  │  ML Scoring Engine      │ │
+                              │  │  • RF impact prediction │ │
+                              │  │  • Congestion forecaster│ │
+                              │  └─────────────────────────┘ │
+                              │  ┌─────────────────────────┐ │
+                              │  │  LP/ILP Optimizer       │ │
+                              │  │  • Resource allocation  │ │
+                              │  └─────────────────────────┘ │
+                              │  ┌─────────────────────────┐ │
+                              │  │  Routing Engine         │ │
+                              │  │  • Diversion planning   │ │
+                              │  └─────────────────────────┘ │
+                              │  ┌─────────────────────────┐ │
+                              │  │  Event Store (in-memory)│ │
+                              │  │  → replaceable with DB  │ │
+                              │  └─────────────────────────┘ │
+                              └──────────────────────────────┘
                                           │
                               ┌───────────┴──────────┐
-                              │  lib/ (shared, typed) │
-                              │  • api-spec/          │
-                              │  • api-client-react/  │
-                              │  • api-zod/           │
-                              │  • db/                │
+                              │  lib/ (shared, typed)│
+                              │  • api-spec/         │
+                              │  • api-client-react/ │
+                              │  • api-zod/          │
+                              │  • db/               │
                               └──────────────────────┘
 ```
 
